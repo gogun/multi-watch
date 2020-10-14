@@ -1,6 +1,5 @@
 import datetime
 import time
-import pymyip
 import requests
 
 from luma.core.interface.serial import spi, noop
@@ -223,7 +222,6 @@ weather_type = {
     "Clear" : drawSun
 }
 
-
 try:
     serial = spi(port=0, device=0, gpio=noop())
     device = max7219(serial, cascaded=8, rotate=0, block_orientation=-90)
@@ -237,16 +235,24 @@ try:
     while True:
         now = datetime.datetime.now(offset)
         if count == 1800:
-            city = pymyip.get_city()
-            print(city)
-            response = requests.get(
-                "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + appid)
-            if (response.status_code != 404) :
-                temp = int_around(response.json().get("main").get("temp") - 273.15)
-                weather = response.json().get("weather")[0].get("main")
-                timezone = int(response.json().get("timezone")) / 3600
-                offset = datetime.timezone(datetime.timedelta(hours=timezone))
-            count = 0
+            try:
+                import pymyip
+                city = pymyip.get_city()
+                print(city)
+            except:
+                print("NO INTERNET")
+
+            try:
+                response = requests.get(
+                    "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + appid)
+                if (response.status_code != 404) :
+                    temp = int_around(response.json().get("main").get("temp") - 273.15)
+                    weather = response.json().get("weather")[0].get("main")
+                    timezone = int(response.json().get("timezone")) / 3600
+                    offset = datetime.timezone(datetime.timedelta(hours=timezone))
+                count = 0
+            except requests.ConnectionError:
+                count = 1620
 
         with canvas(device) as draw:
             hourFirst = str(int(now.hour / 10))
