@@ -225,6 +225,7 @@ weather_type = {
 try:
     serial = spi(port=0, device=0, gpio=noop())
     device = max7219(serial, cascaded=8, rotate=0, block_orientation=-90)
+    device.contrast(25)
     print("Created device")
 
     offset = datetime.timezone(datetime.timedelta(hours=3))
